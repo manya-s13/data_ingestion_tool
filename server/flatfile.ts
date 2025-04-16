@@ -29,27 +29,33 @@ class FlatFileHandler {
         fileContent = config.file.toString('utf-8');
       } else if (typeof config.file === 'string') {
         fileContent = config.file;
-      } else if (typeof config.file === 'object' && 'toString' in config.file) {
-        fileContent = config.file.toString('utf-8');
+      } else if (typeof config.file instanceof Object) {
+        fileContent = JSON.stringify(config.file);
       } else {
         throw new Error("Unsupported file format");
       }
 
-      // Split by newlines and filter empty lines
+      // Remove BOM if present and split by newlines
+      fileContent = fileContent.replace(/^\uFEFF/, '');
       const lines = fileContent.split('\n').filter(line => line.trim());
+      
       if (lines.length === 0) {
         throw new Error("Empty file");
       }
 
+      // Parse headers, removing quotes if present
       const headers = lines[0].split(config.delimiter || ',')
-        .map(header => header.trim())
+        .map(header => header.trim().replace(/^["']|["']$/g, ''))
         .filter(header => header.length > 0);
 
       if (headers.length === 0) {
         throw new Error("No valid columns found in CSV header");
       }
 
-      const types = this.inferColumnTypes(lines[1], config.delimiter || ',', headers.length);
+      // Infer types from the first data row
+      const dataRow = lines[1];
+      const types = dataRow ? this.inferColumnTypes(dataRow, config.delimiter || ',', headers.length) : 
+                             Array(headers.length).fill('String');
 
       return headers.map((header, index) => ({
         name: header,
@@ -111,11 +117,19 @@ class FlatFileHandler {
 
       const outputPath = path.join(outputDir, flatFileConfig.filename || 'export.csv');
 
-      const fileContent = flatFileConfig.file instanceof Buffer 
-        ? flatFileConfig.file.toString('utf-8')
-        : typeof flatFileConfig.file === 'string'
-          ? flatFileConfig.file
-          : '';
+      let fileContent;
+      if (Buffer.isBuffer(flatFileConfig.file)) {
+        fileContent = flatFileConfig.file.toString('utf-8');
+      } else if (typeof flatFileConfig.file === 'string') {
+        fileContent = flatFileConfig.file;
+      } else if (flatFileConfig.file instanceof Object) {
+        fileContent = JSON.stringify(flatFileConfig.file);
+      } else {
+        throw new Error("Invalid file format");
+      }
+
+      // Remove BOM if present
+      fileContent = fileContent.replace(/^\uFEFF/, '');
 
       const lines = fileContent.split('\n').filter(line => line.trim());
       if (lines.length < 2) {
