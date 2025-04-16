@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { 
   DataSource,
   Direction,
@@ -24,6 +25,7 @@ interface ConnectionStepProps {
   availableTables: string[];
   selectedTable: string;
   onTableSelect: (table: string) => void;
+  onTablesFetch: () => Promise<void>;
 }
 
 const ConnectionStep: React.FC<ConnectionStepProps> = ({
@@ -38,8 +40,10 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
   isFetchingTables,
   availableTables,
   selectedTable,
-  onTableSelect
+  onTableSelect,
+  onTablesFetch
 }) => {
+  const { toast } = useToast();
   // Local state to handle form input
   const [localClickhouseConfig, setLocalClickhouseConfig] = useState(clickhouseConfig);
   const [localFlatFileConfig, setLocalFlatFileConfig] = useState(flatFileConfig);
@@ -83,25 +87,47 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
     onNextStep();
   };
 
-  // Check if form is valid
-  const isFormValid = () => {
-    // ClickHouse validation is needed for both directions
-    const isClickhouseValid = 
+  // Check if ClickHouse config is valid
+  const isClickhouseValid = () => {
+    return (
       localClickhouseConfig.host && 
       localClickhouseConfig.port && 
       localClickhouseConfig.database && 
       localClickhouseConfig.user && 
-      localClickhouseConfig.password;
-    
-    // Flat File validation is needed for both directions
-    const isFlatFileValid = 
+      localClickhouseConfig.password
+    );
+  };
+  
+  // Check if Flat File config is valid
+  const isFlatFileValid = () => {
+    return (
       localFlatFileConfig.filename && 
-      localFlatFileConfig.delimiter;
+      localFlatFileConfig.delimiter
+    );
+  };
+  
+  // Fetch tables from API
+  const fetchTables = async () => {
+    try {
+      await onTablesFetch();
+    } catch (error) {
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to the ClickHouse instance. Please check your connection details.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Check if form is valid for continuing to next step
+  const isFormValid = () => {
+    // ClickHouse and Flat File validation
+    const configsValid = isClickhouseValid() && isFlatFileValid();
     
     // Table must be selected
     const isTableSelected = selectedTable !== "";
     
-    return isClickhouseValid && isFlatFileValid && isTableSelected;
+    return configsValid && isTableSelected;
   };
 
   return (
@@ -205,29 +231,69 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         <div className="p-4 border border-neutral-200 rounded-lg">
           <h3 className="text-md font-medium text-neutral-500 mb-3">Table Selection</h3>
           
-          {isFetchingTables ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
-              <span>Loading tables...</span>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="table">Select Table</Label>
+          <div className="space-y-4">
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="table">Select Table</Label>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    if (isClickhouseValid() && isFlatFileValid()) {
+                      onClickhouseConfigChange(localClickhouseConfig);
+                      onFlatFileConfigChange(localFlatFileConfig);
+                      fetchTables();
+                    } else {
+                      toast({
+                        title: "Missing Connection Details",
+                        description: "Please fill in all the required connection details first.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  disabled={isFetchingTables}
+                  className="h-8"
+                >
+                  {isFetchingTables ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Fetching Tables...
+                    </>
+                  ) : (
+                    <>Test Connection</>
+                  )}
+                </Button>
+              </div>
+              
               <Select 
                 value={selectedTable} 
                 onValueChange={onTableSelect}
+                disabled={isFetchingTables || availableTables.length === 0}
               >
                 <SelectTrigger id="table">
-                  <SelectValue placeholder="Select a table" />
+                  <SelectValue placeholder={availableTables.length === 0 ? "No tables available - test connection first" : "Select a table"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTables.map(table => (
-                    <SelectItem key={table} value={table}>{table}</SelectItem>
-                  ))}
+                  {availableTables.length === 0 ? (
+                    <SelectItem value="sample">Sample tables will appear here</SelectItem>
+                  ) : (
+                    availableTables.map(table => (
+                      <SelectItem key={table} value={table}>{table}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
-          )}
+            
+            {!isFetchingTables && availableTables.length === 0 && (
+              <div className="text-sm text-muted-foreground">
+                Click "Test Connection" to fetch available tables from your ClickHouse instance.
+                <br />
+                <strong>Tip:</strong> For demo purposes, sample tables like "uk_price_paid", "ontime", etc. will be displayed.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
