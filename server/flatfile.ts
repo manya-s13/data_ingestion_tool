@@ -54,13 +54,12 @@ class FlatFileHandler {
         name: header,
         type: types[index] || 'String'
       }));
-    }
       
-      // For demonstration, we'll return sample columns
     } catch (error: any) {
       throw new Error(`Failed to get columns: ${error.message}`);
     }
     
+    // For demonstration, we'll return sample columns
     if (table.toLowerCase().includes("customer")) {
         return [
           { name: "customer_id", type: "String" },
