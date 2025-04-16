@@ -29,12 +29,13 @@ export const ClickHouseConfigSchema = z.object({
   port: z.string().min(1, "Port is required"),
   database: z.string().min(1, "Database is required"),
   user: z.string().min(1, "User is required"),
-  password: z.string().min(1, "Password is required")
+  jwt: z.string().min(1, "JWT is required")
 });
 export type ClickHouseConfig = z.infer<typeof ClickHouseConfigSchema>;
 
 export const FlatFileConfigSchema = z.object({
   filename: z.string().min(1, "Filename is required"),
+  file: z.any().optional(), // Added file upload field
   delimiter: z.string().min(1, "Delimiter is required")
 });
 export type FlatFileConfig = z.infer<typeof FlatFileConfigSchema>;
@@ -54,7 +55,7 @@ export const IngestRequestSchema = z.object({
   clickhouseConfig: ClickHouseConfigSchema,
   flatFileConfig: FlatFileConfigSchema,
   table: z.string().optional(),
-  selectedColumns: z.array(z.string())
+  selectedColumns: z.array(z.string()).optional()
 });
 export type IngestRequest = z.infer<typeof IngestRequestSchema>;
 

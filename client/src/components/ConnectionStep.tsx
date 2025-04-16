@@ -47,7 +47,9 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
   // Local state to handle form input
   const [localClickhouseConfig, setLocalClickhouseConfig] = useState(clickhouseConfig);
   const [localFlatFileConfig, setLocalFlatFileConfig] = useState(flatFileConfig);
-  
+  const [file, setFile] = useState<File | null>(null);
+
+
   // Update local state when props change
   useEffect(() => {
     setLocalClickhouseConfig(clickhouseConfig);
@@ -71,6 +73,14 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
       [name]: value
     });
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setLocalFlatFileConfig({...localFlatFileConfig, file: e.target.files[0]})
+    }
+  };
+
 
   // Handle delimiter select change
   const handleDelimiterChange = (value: string) => {
@@ -97,15 +107,15 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
       localClickhouseConfig.password
     );
   };
-  
+
   // Check if Flat File config is valid
   const isFlatFileValid = () => {
     return (
-      localFlatFileConfig.filename && 
+      localFlatFileConfig.file &&
       localFlatFileConfig.delimiter
     );
   };
-  
+
   // Fetch tables from API
   const fetchTables = async () => {
     try {
@@ -118,15 +128,15 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
       });
     }
   };
-  
+
   // Check if form is valid for continuing to next step
   const isFormValid = () => {
     // ClickHouse and Flat File validation
-    const configsValid = isClickhouseValid() && isFlatFileValid();
-    
-    // Table must be selected
-    const isTableSelected = selectedTable !== "";
-    
+    const configsValid = (direction === 'clickhouseToFlatFile' && isFlatFileValid()) || (direction === 'flatFileToClickhouse' && isClickhouseValid());
+
+    // Table must be selected only for ClickHouse to FlatFile
+    const isTableSelected = direction === 'clickhouseToFlatFile' ? selectedTable !== "" : true;
+
     return configsValid && isTableSelected;
   };
 
@@ -180,12 +190,12 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="jwtToken">JWT Token</Label>
               <Input 
-                id="password" 
-                name="password" 
-                placeholder="Enter your ClickHouse password" 
-                value={localClickhouseConfig.password}
+                id="jwtToken" 
+                name="jwtToken" 
+                placeholder="Enter your JWT token" 
+                value={localClickhouseConfig.password} //Using password field temporarily
                 onChange={handleClickhouseChange}
                 type="password"
               />
@@ -198,14 +208,8 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
           <h3 className="text-md font-medium text-neutral-500 mb-3">Flat File Configuration</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="filename">Filename</Label>
-              <Input 
-                id="filename" 
-                name="filename" 
-                placeholder="data.csv" 
-                value={localFlatFileConfig.filename}
-                onChange={handleFlatFileChange}
-              />
+              <Label htmlFor="fileUpload">File Upload</Label>
+              <input type="file" id="fileUpload" name="fileUpload" onChange={handleFileUpload} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="delimiter">Delimiter</Label>
@@ -228,73 +232,75 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         </div>
 
         {/* Table Selection */}
-        <div className="p-4 border border-neutral-200 rounded-lg">
-          <h3 className="text-md font-medium text-neutral-500 mb-3">Table Selection</h3>
-          
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="table">Select Table</Label>
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => {
-                    if (isClickhouseValid() && isFlatFileValid()) {
-                      onClickhouseConfigChange(localClickhouseConfig);
-                      onFlatFileConfigChange(localFlatFileConfig);
-                      fetchTables();
-                    } else {
-                      toast({
-                        title: "Missing Connection Details",
-                        description: "Please fill in all the required connection details first.",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                  disabled={isFetchingTables}
-                  className="h-8"
+        {direction === 'clickhouseToFlatFile' && (
+          <div className="p-4 border border-neutral-200 rounded-lg">
+            <h3 className="text-md font-medium text-neutral-500 mb-3">Table Selection</h3>
+
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="table">Select Table</Label>
+                  <Button 
+                    type="button" 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      if (isClickhouseValid()) {
+                        onClickhouseConfigChange(localClickhouseConfig);
+                        onFlatFileConfigChange(localFlatFileConfig);
+                        fetchTables();
+                      } else {
+                        toast({
+                          title: "Missing Connection Details",
+                          description: "Please fill in all the required connection details first.",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    disabled={isFetchingTables}
+                    className="h-8"
+                  >
+                    {isFetchingTables ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Fetching Tables...
+                      </>
+                    ) : (
+                      <>Test Connection</>
+                    )}
+                  </Button>
+                </div>
+
+                <Select 
+                  value={selectedTable} 
+                  onValueChange={onTableSelect}
+                  disabled={isFetchingTables || availableTables.length === 0}
                 >
-                  {isFetchingTables ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Fetching Tables...
-                    </>
-                  ) : (
-                    <>Test Connection</>
-                  )}
-                </Button>
+                  <SelectTrigger id="table">
+                    <SelectValue placeholder={availableTables.length === 0 ? "No tables available - test connection first" : "Select a table"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTables.length === 0 ? (
+                      <SelectItem value="sample">Sample tables will appear here</SelectItem>
+                    ) : (
+                      availableTables.map(table => (
+                        <SelectItem key={table} value={table}>{table}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <Select 
-                value={selectedTable} 
-                onValueChange={onTableSelect}
-                disabled={isFetchingTables || availableTables.length === 0}
-              >
-                <SelectTrigger id="table">
-                  <SelectValue placeholder={availableTables.length === 0 ? "No tables available - test connection first" : "Select a table"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTables.length === 0 ? (
-                    <SelectItem value="sample">Sample tables will appear here</SelectItem>
-                  ) : (
-                    availableTables.map(table => (
-                      <SelectItem key={table} value={table}>{table}</SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+
+              {!isFetchingTables && availableTables.length === 0 && (
+                <div className="text-sm text-muted-foreground">
+                  Click "Test Connection" to fetch available tables from your ClickHouse instance.
+                  <br />
+                  <strong>Tip:</strong> For demo purposes, sample tables like "uk_price_paid", "ontime", etc. will be displayed.
+                </div>
+              )}
             </div>
-            
-            {!isFetchingTables && availableTables.length === 0 && (
-              <div className="text-sm text-muted-foreground">
-                Click "Test Connection" to fetch available tables from your ClickHouse instance.
-                <br />
-                <strong>Tip:</strong> For demo purposes, sample tables like "uk_price_paid", "ontime", etc. will be displayed.
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -306,7 +312,7 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         >
           Back to Source
         </Button>
-        
+
         <Button
           onClick={handleNextStep}
           disabled={!isFormValid() || isFetchingTables}
