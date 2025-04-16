@@ -22,10 +22,10 @@ class ClickHouseClient {
     try {
       const client = this.createClickHouseClient(config);
       const query = 'SHOW TABLES';
-      const resultSet = await client.query({query}).exec();
-      const tables = await resultSet.json();
+      const resultSet = await client.query({query});
+      const rows = await resultSet.rows();
       await client.close();
-      return tables.map((row: any) => row.name);
+      return rows.map((row: any) => row.name);
     } catch (error: any) {
       throw new Error(`Failed to get tables: ${error.message}`);
     }
