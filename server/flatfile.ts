@@ -22,8 +22,13 @@ class FlatFileHandler {
         return [];
       }
 
-      // Read the first line of the file to get column names
-      const fileContent = config.file instanceof File ? await config.file.text() : '';
+      // Handle file data as Buffer or string
+      const fileContent = config.file instanceof Buffer 
+        ? config.file.toString('utf-8')
+        : typeof config.file === 'string' 
+          ? config.file
+          : '';
+          
       const lines = fileContent.split('\n');
       if (lines.length === 0) return [];
 
@@ -113,7 +118,13 @@ class FlatFileHandler {
         throw new Error("File or table name is missing");
       }
 
-      const fileContent = await flatFileConfig.file.text();
+      // Handle file data as Buffer or string
+      const fileContent = flatFileConfig.file instanceof Buffer 
+        ? flatFileConfig.file.toString('utf-8')
+        : typeof flatFileConfig.file === 'string'
+          ? flatFileConfig.file
+          : '';
+          
       const lines = fileContent.split('\n').filter(line => line.trim());
       if (lines.length < 2) { // Need at least header and one data row
         throw new Error("File is empty or has no data rows");
