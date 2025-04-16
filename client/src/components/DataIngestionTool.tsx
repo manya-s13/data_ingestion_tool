@@ -88,6 +88,7 @@ const DataIngestionTool = () => {
                 // Error handling is done in the hook
               }
             }}
+            onTablesFetch={fetchTables}
             isFetchingTables={isFetchingTables}
             availableTables={availableTables}
             selectedTable={selectedTable}
