@@ -9,7 +9,9 @@ class ClickHouseClient {
   // Create ClickHouse client
   private createClickHouseClient(config: ClickHouseConfig) {
     return createClient({
-      host: `https://${config.host}:${config.port}`,
+      host: config.host,
+      port: Number(config.port),
+      protocol: 'https:',
       username: config.user,
       password: config.password,
       database: config.database
