@@ -8,12 +8,8 @@ class FlatFileHandler {
   // Get "tables" from flat file - for flat files, we'll consider the file itself as a table
   async getTables(config: FlatFileConfig): Promise<string[]> {
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // In a real implementation, we would check if the file exists
-      // For demonstration, we'll return the filename as the table
-      return [config.filename];
+      // Return the filename as the table name
+      return config.filename ? [config.filename] : [];
     } catch (error: any) {
       throw new Error(`Failed to get tables: ${error.message}`);
     }
@@ -22,11 +18,20 @@ class FlatFileHandler {
   // Get columns from flat file by reading the header row
   async getColumns(config: FlatFileConfig, table: string): Promise<ColumnInfo[]> {
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // In a real implementation, we would read the first line of the file
-      // and parse it based on the delimiter to get the column names
+      if (!config.file || !table) {
+        return [];
+      }
+
+      // Read the first line of the file to get column names
+      const fileContent = config.file instanceof File ? await config.file.text() : '';
+      const lines = fileContent.split('\n');
+      if (lines.length === 0) return [];
+
+      const headers = lines[0].split(config.delimiter || ',');
+      return headers.map(header => ({
+        name: header.trim(),
+        type: 'String' // Default type
+      }));
       
       // For demonstration, we'll return sample columns
       if (table.toLowerCase().includes("customer")) {
@@ -104,13 +109,22 @@ class FlatFileHandler {
     selectedColumns: string[]
   ): Promise<IngestResult> {
     try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // In a real implementation, this would:
-      // 1. Read the flat file line by line
-      // 2. Parse each line based on the delimiter
-      // 3. Construct and execute INSERT queries for ClickHouse
+      if (!flatFileConfig.file || !table) {
+        throw new Error("File or table name is missing");
+      }
+
+      const fileContent = await flatFileConfig.file.text();
+      const lines = fileContent.split('\n').filter(line => line.trim());
+      if (lines.length < 2) { // Need at least header and one data row
+        throw new Error("File is empty or has no data rows");
+      }
+
+      const headers = lines[0].split(flatFileConfig.delimiter || ',')
+        .map(h => h.trim())
+        .filter(h => selectedColumns.includes(h));
+
+      // Process data rows
+      const processedCount = lines.length - 1; // Subtract header row
       
       // For demonstration, we'll simulate a successful import
       const recordCount = Math.floor(Math.random() * 50000) + 1000;
