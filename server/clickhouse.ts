@@ -8,10 +8,9 @@ import { createClient } from '@clickhouse/client';
 class ClickHouseClient {
   // Create ClickHouse client
   private createClickHouseClient(config: ClickHouseConfig) {
+    const baseUrl = `https://${config.host}:${config.port}`;
     return createClient({
-      host: config.host,
-      port: Number(config.port),
-      protocol: 'https:',
+      url: baseUrl,
       username: config.user,
       password: config.password,
       database: config.database
