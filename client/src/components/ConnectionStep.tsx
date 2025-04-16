@@ -190,12 +190,12 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="jwtToken">JWT Token</Label>
+              <Label htmlFor="jwt">JWT Token</Label>
               <Input 
-                id="jwtToken" 
-                name="jwtToken" 
+                id="jwt" 
+                name="jwt" 
                 placeholder="Enter your JWT token" 
-                value={localClickhouseConfig.password} //Using password field temporarily
+                value={localClickhouseConfig.jwt}
                 onChange={handleClickhouseChange}
                 type="password"
               />
@@ -232,7 +232,7 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         </div>
 
         {/* Table Selection */}
-        {direction === 'clickhouseToFlatFile' && (
+        {direction === 'flatfile_to_clickhouse' && (
           <div className="p-4 border border-neutral-200 rounded-lg">
             <h3 className="text-md font-medium text-neutral-500 mb-3">Table Selection</h3>
 
