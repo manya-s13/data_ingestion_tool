@@ -34,8 +34,8 @@ export const ClickHouseConfigSchema = z.object({
 export type ClickHouseConfig = z.infer<typeof ClickHouseConfigSchema>;
 
 export const FlatFileConfigSchema = z.object({
-  filename: z.string().min(1, "Filename is required"),
-  file: z.any().optional(), // Added file upload field
+  file: z.any().optional(),
+  filename: z.string().optional(),
   delimiter: z.string().min(1, "Delimiter is required")
 });
 export type FlatFileConfig = z.infer<typeof FlatFileConfigSchema>;
