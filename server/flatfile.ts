@@ -23,20 +23,38 @@ class FlatFileHandler {
       }
 
       // Handle file data as Buffer or string
-      const fileContent = config.file instanceof Buffer 
-        ? config.file.toString('utf-8')
-        : typeof config.file === 'string' 
-          ? config.file
-          : '';
-          
-      const lines = fileContent.split('\n');
-      if (lines.length === 0) return [];
+      let fileContent = '';
+      if (config.file instanceof Buffer) {
+        fileContent = config.file.toString('utf-8');
+      } else if (typeof config.file === 'string') {
+        fileContent = config.file;
+      } else {
+        throw new Error("Invalid file format");
+      }
 
-      const headers = lines[0].split(config.delimiter || ',');
-      return headers.map(header => ({
-        name: header.trim(),
-        type: 'String' // Default type
+      // Split by newlines and filter empty lines
+      const lines = fileContent.split('\n').filter(line => line.trim());
+      if (lines.length === 0) {
+        throw new Error("Empty file");
+      }
+
+      // Get headers and clean them
+      const headers = lines[0].split(config.delimiter || ',')
+        .map(header => header.trim())
+        .filter(header => header.length > 0);
+
+      if (headers.length === 0) {
+        throw new Error("No valid columns found in CSV header");
+      }
+
+      // Try to infer types from first data row
+      const types = this.inferColumnTypes(lines[1], config.delimiter || ',', headers.length);
+
+      return headers.map((header, index) => ({
+        name: header,
+        type: types[index] || 'String'
       }));
+    }
       
       // For demonstration, we'll return sample columns
       if (table.toLowerCase().includes("customer")) {
@@ -275,6 +293,23 @@ class FlatFileHandler {
   }
 
   // Helper function to generate generic sample data
+  private inferColumnTypes(dataRow: string, delimiter: string, columnCount: number): string[] {
+    if (!dataRow) return Array(columnCount).fill('String');
+    
+    const values = dataRow.split(delimiter).map(v => v.trim());
+    return values.map(value => {
+      if (!isNaN(Number(value))) {
+        return value.includes('.') ? 'Float64' : 'Int32';
+      }
+      // Try parsing date
+      const date = new Date(value);
+      if (!isNaN(date.getTime()) && value.includes('-')) {
+        return 'Date';
+      }
+      return 'String';
+    });
+  }
+
   private generateGenericSampleData(selectedColumns: string[]): TableData[] {
     const sampleData: TableData[] = [];
     
