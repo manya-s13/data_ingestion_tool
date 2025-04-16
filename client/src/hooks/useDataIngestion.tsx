@@ -17,7 +17,7 @@ const defaultClickhouseConfig: ClickHouseConfig = {
   port: "",
   database: "",
   user: "",
-  jwt: ""
+  password: ""
 };
 
 const defaultFlatFileConfig: FlatFileConfig = {

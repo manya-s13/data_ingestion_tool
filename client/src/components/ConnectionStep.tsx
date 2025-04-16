@@ -91,7 +91,7 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
       localClickhouseConfig.port && 
       localClickhouseConfig.database && 
       localClickhouseConfig.user && 
-      localClickhouseConfig.jwt;
+      localClickhouseConfig.password;
     
     // Flat File validation is needed for both directions
     const isFlatFileValid = 
@@ -154,12 +154,12 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="jwt">JWT Token</Label>
+              <Label htmlFor="password">Password</Label>
               <Input 
-                id="jwt" 
-                name="jwt" 
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
-                value={localClickhouseConfig.jwt}
+                id="password" 
+                name="password" 
+                placeholder="Enter your ClickHouse password" 
+                value={localClickhouseConfig.password}
                 onChange={handleClickhouseChange}
                 type="password"
               />
