@@ -20,14 +20,22 @@ class FlatFileHandler {
       }
 
       let fileContent = '';
-      if (config.file instanceof Buffer) {
+      if (!config.file) {
+        throw new Error("No file provided");
+      }
+
+      // Handle Buffer or string input
+      if (Buffer.isBuffer(config.file)) {
         fileContent = config.file.toString('utf-8');
       } else if (typeof config.file === 'string') {
         fileContent = config.file;
+      } else if (typeof config.file === 'object' && 'toString' in config.file) {
+        fileContent = config.file.toString('utf-8');
       } else {
-        throw new Error("Invalid file format");
+        throw new Error("Unsupported file format");
       }
 
+      // Split by newlines and filter empty lines
       const lines = fileContent.split('\n').filter(line => line.trim());
       if (lines.length === 0) {
         throw new Error("Empty file");
