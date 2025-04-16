@@ -29,7 +29,7 @@ export const ClickHouseConfigSchema = z.object({
   port: z.string().min(1, "Port is required"),
   database: z.string().min(1, "Database is required"),
   user: z.string().min(1, "User is required"),
-  jwt: z.string().min(1, "JWT token is required")
+  jwt: z.string().optional()
 });
 export type ClickHouseConfig = z.infer<typeof ClickHouseConfigSchema>;
 

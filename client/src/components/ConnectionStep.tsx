@@ -103,17 +103,25 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
       localClickhouseConfig.host && 
       localClickhouseConfig.port && 
       localClickhouseConfig.database && 
-      localClickhouseConfig.user && 
-      localClickhouseConfig.password
+      localClickhouseConfig.user
     );
   };
 
   // Check if Flat File config is valid
   const isFlatFileValid = () => {
     return (
-      localFlatFileConfig.file &&
-      localFlatFileConfig.delimiter
+      localFlatFileConfig.delimiter &&
+      (direction === 'flatfile_to_clickhouse' ? localFlatFileConfig.file : true)
     );
+  };
+
+  // Check if form is valid for continuing to next step
+  const isFormValid = () => {
+    if (direction === 'clickhouse_to_flatfile') {
+      return isClickhouseValid() && selectedTable !== "";
+    } else {
+      return isClickhouseValid() && isFlatFileValid();
+    }
   };
 
   // Fetch tables from API
@@ -127,17 +135,6 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         variant: "destructive"
       });
     }
-  };
-
-  // Check if form is valid for continuing to next step
-  const isFormValid = () => {
-    // ClickHouse and Flat File validation
-    const configsValid = (direction === 'clickhouseToFlatFile' && isFlatFileValid()) || (direction === 'flatFileToClickhouse' && isClickhouseValid());
-
-    // Table must be selected only for ClickHouse to FlatFile
-    const isTableSelected = direction === 'clickhouseToFlatFile' ? selectedTable !== "" : true;
-
-    return configsValid && isTableSelected;
   };
 
   return (
