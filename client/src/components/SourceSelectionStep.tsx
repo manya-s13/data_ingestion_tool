@@ -23,38 +23,18 @@ const SourceSelectionStep: React.FC<SourceSelectionStepProps> = ({
 
   return (
     <div>
-      <h2 className="text-lg font-medium text-neutral-500 mb-6">Step 1: Select Data Source and Direction</h2>
+      <h2 className="text-lg font-medium text-neutral-500 mb-6">Step 1: Select Transfer Direction</h2>
 
       <div className="space-y-8">
-        {/* Data Source Selection */}
-        <div>
-          <h3 className="text-md font-medium text-neutral-500 mb-3">Data Source</h3>
-          <RadioGroup
-            value={dataSource}
-            onValueChange={(value) => onDataSourceChange(value as DataSource)}
-            className="space-y-3"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="clickhouse" id="clickhouse" />
-              <Label htmlFor="clickhouse" className="text-sm font-medium cursor-pointer">
-                ClickHouse Database
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="flatfile" id="flatfile" />
-              <Label htmlFor="flatfile" className="text-sm font-medium cursor-pointer">
-                Flat File (CSV/TSV)
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
-
         {/* Direction Selection */}
         <div>
           <h3 className="text-md font-medium text-neutral-500 mb-3">Transfer Direction</h3>
           <RadioGroup
             value={direction}
-            onValueChange={(value) => onDirectionChange(value as Direction)}
+            onValueChange={(value) => {
+              onDirectionChange(value as Direction);
+              onDataSourceChange(value === "clickhouse_to_flatfile" ? "clickhouse" : "flatfile");
+            }}
             className="space-y-3"
           >
             <div className="flex items-center space-x-2">

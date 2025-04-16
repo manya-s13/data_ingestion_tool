@@ -204,35 +204,37 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
         </div>
 
         {/* Flat File Configuration */}
-        <div className="p-4 border border-neutral-200 rounded-lg">
-          <h3 className="text-md font-medium text-neutral-500 mb-3">Flat File Configuration</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="fileUpload">File Upload</Label>
-              <input type="file" id="fileUpload" name="fileUpload" onChange={handleFileUpload} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="delimiter">Delimiter</Label>
-              <Select 
-                value={localFlatFileConfig.delimiter} 
-                onValueChange={handleDelimiterChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select delimiter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value=",">Comma (,)</SelectItem>
-                  <SelectItem value="\t">Tab</SelectItem>
-                  <SelectItem value=";">Semicolon (;)</SelectItem>
-                  <SelectItem value="|">Pipe (|)</SelectItem>
-                </SelectContent>
-              </Select>
+        {direction === 'flatfile_to_clickhouse' && (
+          <div className="p-4 border border-neutral-200 rounded-lg">
+            <h3 className="text-md font-medium text-neutral-500 mb-3">Flat File Configuration</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fileUpload">File Upload</Label>
+                <input type="file" id="fileUpload" name="fileUpload" onChange={handleFileUpload} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="delimiter">Delimiter</Label>
+                <Select 
+                  value={localFlatFileConfig.delimiter} 
+                  onValueChange={handleDelimiterChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select delimiter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value=",">Comma (,)</SelectItem>
+                    <SelectItem value="\t">Tab</SelectItem>
+                    <SelectItem value=";">Semicolon (;)</SelectItem>
+                    <SelectItem value="|">Pipe (|)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Table Selection */}
-        {direction === 'flatfile_to_clickhouse' && (
+        {direction === 'clickhouse_to_flatfile' && (
           <div className="p-4 border border-neutral-200 rounded-lg">
             <h3 className="text-md font-medium text-neutral-500 mb-3">Table Selection</h3>
 
