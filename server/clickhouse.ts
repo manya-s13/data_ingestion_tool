@@ -11,7 +11,7 @@ class ClickHouseClient {
     return createClient({
       host: `https://${config.host}:${config.port}`,
       username: config.user,
-      password: config.jwt, // Using JWT token for authentication
+      password: config.password,
       database: config.database
     });
   }

@@ -192,12 +192,12 @@ const ConnectionStep: React.FC<ConnectionStepProps> = ({
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="jwt">JWT Token</Label>
+              <Label htmlFor="password">Password</Label>
               <Input 
-                id="jwt" 
-                name="jwt" 
-                placeholder="Enter your JWT token" 
-                value={localClickhouseConfig.jwt}
+                id="password" 
+                name="password" 
+                placeholder="Enter your password" 
+                value={localClickhouseConfig.password}
                 onChange={handleClickhouseChange}
                 type="password"
               />
