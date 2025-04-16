@@ -19,24 +19,12 @@ class ClickHouseClient {
   // Get list of tables from ClickHouse database
   async getTables(config: ClickHouseConfig): Promise<string[]> {
     try {
-      // For safety, we'll use the mock implementation for now to avoid 
-      // potential connection issues during development
-      
-      // In production, uncomment this to use real connection:
-      /*
       const client = this.createClickHouseClient(config);
       const query = 'SHOW TABLES';
       const resultSet = await client.query({query}).exec();
       const tables = await resultSet.json();
       await client.close();
       return tables.map((row: any) => row.name);
-      */
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Return example ClickHouse tables
-      return ["uk_price_paid", "ontime", "hits", "visits"];
     } catch (error: any) {
       throw new Error(`Failed to get tables: ${error.message}`);
     }

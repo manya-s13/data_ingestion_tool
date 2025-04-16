@@ -118,6 +118,14 @@ class FlatFileHandler {
         throw new Error("File or table name is missing");
       }
 
+      // Save file to disk
+      const outputDir = './data/exports';
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      
+      const outputPath = path.join(outputDir, flatFileConfig.filename || 'export.csv');
+
       // Handle file data as Buffer or string
       const fileContent = flatFileConfig.file instanceof Buffer 
         ? flatFileConfig.file.toString('utf-8')
