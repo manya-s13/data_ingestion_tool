@@ -57,7 +57,11 @@ class FlatFileHandler {
     }
       
       // For demonstration, we'll return sample columns
-      if (table.toLowerCase().includes("customer")) {
+    } catch (error: any) {
+      throw new Error(`Failed to get columns: ${error.message}`);
+    }
+    
+    if (table.toLowerCase().includes("customer")) {
         return [
           { name: "customer_id", type: "String" },
           { name: "first_name", type: "String" },
