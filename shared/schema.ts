@@ -1,12 +1,14 @@
-import { pgTable, text, serial, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, json, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Original user schema (keeping for compatibility)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -16,6 +18,71 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const usersRelations = relations(users, ({ many }) => ({
+  ingestJobs: many(ingestJobs),
+  savedConfigurations: many(savedConfigurations),
+}));
+
+// Direction enum for database
+export const directionEnum = pgEnum('direction', ['clickhouse_to_flatfile', 'flatfile_to_clickhouse']);
+
+// Ingestion job history table
+export const ingestJobs = pgTable("ingest_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  direction: directionEnum("direction").notNull(),
+  sourceTable: text("source_table").notNull(),
+  targetFilename: text("target_filename"),
+  columnsSelected: json("columns_selected").notNull(),
+  recordsProcessed: integer("records_processed"),
+  status: text("status").notNull(), // "completed", "failed", "in_progress"
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type IngestJob = typeof ingestJobs.$inferSelect;
+export const insertIngestJobSchema = createInsertSchema(ingestJobs).omit({ 
+  id: true,
+  startedAt: true,
+  completedAt: true,
+});
+export type InsertIngestJob = z.infer<typeof insertIngestJobSchema>;
+
+export const ingestJobRelations = relations(ingestJobs, ({ one }) => ({
+  user: one(users, {
+    fields: [ingestJobs.userId],
+    references: [users.id],
+  }),
+}));
+
+// Saved configurations table
+export const savedConfigurations = pgTable("saved_configurations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  direction: directionEnum("direction").notNull(),
+  clickhouseConfig: json("clickhouse_config").notNull(),
+  flatFileConfig: json("flat_file_config").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SavedConfiguration = typeof savedConfigurations.$inferSelect;
+export const insertSavedConfigurationSchema = createInsertSchema(savedConfigurations).omit({ 
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertSavedConfiguration = z.infer<typeof insertSavedConfigurationSchema>;
+
+export const savedConfigurationRelations = relations(savedConfigurations, ({ one }) => ({
+  user: one(users, {
+    fields: [savedConfigurations.userId],
+    references: [users.id],
+  }),
+}));
 
 // Data ingestion schemas
 export const DataSourceEnum = z.enum(['clickhouse', 'flatfile']);
